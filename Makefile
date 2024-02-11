@@ -267,16 +267,23 @@ endif
 
 #########################################################################
 RISCV_PATH=riscv64-linux-x86_64-20200528
+GCC_LINARO_VERSION=gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf
+GCC_LINARO_DOWNLOAD_URL=https://releases.linaro.org/components/toolchain/binaries/latest-7/arm-linux-gnueabihf/gcc-linaro-7.5.0-2019.12-x86_64_arm-linux-gnueabihf.tar.xz
 ifeq (x$(riscv_toolchain_check), xyes)
 $(info Prepare riscv toolchain ...);
 $(shell mkdir -p ../tools/toolchain/$(RISCV_PATH) || exit 1)
 $(shell tar --strip-components=1 -xf ../tools/toolchain/$(RISCV_PATH).tar.xz -C ../tools/toolchain/$(RISCV_PATH) || exit 1)
 endif
-arm_toolchain_check=$(shell if [ ! -d ../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi ]; then echo yes; else echo no; fi;)
+arm_toolchain_check=$(shell if [ ! -f ../tools/toolchain/$(GCC_LINARO_VERSION)/.gcc_linaro_stamp ]; then echo yes; else echo no; fi;)
 ifeq (x$(arm_toolchain_check), xyes)
 $(info Prepare arm toolchain ...);
-$(shell mkdir -p ../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi || exit 1)
-$(shell tar --strip-components=1 -xf ../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi.tar.xz -C ../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi || exit 1)
+$(shell rm -rf ../tools || exit 1)
+$(shell mkdir -p ../tools/toolchain/$(GCC_LINARO_VERSION) || exit 1)
+$(info Download arm toolchain ...);
+$(shell wget -O ../tools/toolchain/$(GCC_LINARO_VERSION).tar.xz $(GCC_LINARO_DOWNLOAD_URL) || exit 1)
+$(info Extract arm toolchain ...);
+$(shell tar --strip-components=1 -xf ../tools/toolchain/$(GCC_LINARO_VERSION).tar.xz -C ../tools/toolchain/$(GCC_LINARO_VERSION) || exit 1)
+$(shell touch ../tools/toolchain/$(GCC_LINARO_VERSION)/.gcc_linaro_stamp || exit 1)
 endif
 
 
@@ -286,11 +293,11 @@ DTS_PATH := $(PWD)/arch/riscv/dts
 endif
 
 ifeq (x$(CONFIG_ARM), xy)
-CROSS_COMPILE := $(srctree)/../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-
+CROSS_COMPILE := $(srctree)/../tools/toolchain/$(GCC_LINARO_VERSION)/bin/arm-linux-gnueabihf-
 DTS_PATH := $(PWD)/arch/arm/dts
 endif
 
-CROSS_COMPILE ?= $(srctree)/../tools/toolchain/gcc-linaro-7.2.1-2017.11-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi-
+CROSS_COMPILE ?= $(srctree)/../tools/toolchain/$(GCC_LINARO_VERSION)/bin/arm-linux-gnueabihf-
 DTS_PATH ?= $(PWD)/arch/arm/dts
 
 #######################################################################
@@ -402,7 +409,7 @@ OBJDUMP		= $(CROSS_COMPILE)objdump
 AWK		= awk
 PERL		= perl
 PYTHON		?= python
-DTC		?= $(objtree)/scripts/dtc/dtc
+DTC		?= dtc
 CHECK		= sparse
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ \
