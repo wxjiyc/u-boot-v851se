@@ -4043,7 +4043,7 @@ int mmc_initialize(bd_t *bis)
 int mmc_exit(void)
 {
 	int err;
-	int sdc_no = 2;
+	int sdc_no = 0;
 	struct mmc *mmc = find_mmc_device(sdc_no);
 	bool uhs_en = supports_uhs(mmc->cfg->host_caps);
 
